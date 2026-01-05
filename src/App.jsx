@@ -5,7 +5,7 @@ import {
 } from "recharts";
 import { FiMenu, FiHome, FiPlus, FiList, FiPieChart } from "react-icons/fi";
 
-// --- Prediction based on JEE trend ---
+// Prediction based on marks
 function getPrediction(marks) {
   if (marks >= 285) return { p: "99.9+", r: "< 1k" };
   if (marks >= 260) return { p: "99.5 – 99.9", r: "1k – 5k" };
@@ -26,125 +26,118 @@ export default function App() {
   const [deepMock, setDeepMock] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const [mocks, setMocks] = useState([
-    { id: 1, name: "Mock 1", date: "2026-01-01", platform: "Mathongo", correct: {p:10,c:12,m:8}, incorrect:{p:5,c:3,m:7}, unattempted:{p:10,c:10,m:10} },
-    { id: 2, name: "Mock 2", date: "2026-01-02", platform: "Allen", correct:{p:12,c:10,m:14}, incorrect:{p:6,c:7,m:5}, unattempted:{p:7,c:8,m:6} }
-  ]);
+  const [mocks, setMocks] = useState([]);
 
-  // ADD MOCK STATES
+  // Add mock states
   const [mockName, setMockName] = useState("");
-  const [mockDate, setMockDate] = useState(new Date().toISOString().slice(0,10));
+  const [mockDate, setMockDate] = useState(new Date().toISOString().slice(0, 10));
   const [mockPlatform, setMockPlatform] = useState("");
-  const [correct, setCorrect] = useState({p:"",c:"",m:""});
-  const [incorrect, setIncorrect] = useState({p:"",c:"",m:""});
-  const [unattempted, setUnattempted] = useState({p:"",c:"",m:""});
+  const [correct, setCorrect] = useState({ p: "", c: "", m: "" });
+  const [incorrect, setIncorrect] = useState({ p: "", c: "", m: "" });
+  const [unattempted, setUnattempted] = useState({ p: "", c: "", m: "" });
 
-  // --- CALCULATIONS ---
-  const calcMarks = (mock) => {
-    const { correct, incorrect } = mock;
-    return correct.p*4 + correct.c*4 + correct.m*4 - (incorrect.p + incorrect.c + incorrect.m);
+  // Calculate total marks
+  const calcMarks = (mock) =>
+    mock.correct.p * 4 +
+    mock.correct.c * 4 +
+    mock.correct.m * 4 -
+    (mock.incorrect.p + mock.incorrect.c + mock.incorrect.m);
+
+  const latest = mocks[mocks.length - 1] || {
+    correct: { p: 0, c: 0, m: 0 },
+    incorrect: { p: 0, c: 0, m: 0 },
+    unattempted: { p: 0, c: 0, m: 0 },
   };
-
-  const latest = mocks[mocks.length-1];
   const latestTotal = calcMarks(latest);
   const pred = getPrediction(latestTotal);
 
   const getWeakSubject = (mock) => {
     const marks = {
-      Physics: mock.correct.p*4 - mock.incorrect.p,
-      Chemistry: mock.correct.c*4 - mock.incorrect.c,
-      Maths: mock.correct.m*4 - mock.incorrect.m
+      Physics: mock.correct.p * 4 - mock.incorrect.p,
+      Chemistry: mock.correct.c * 4 - mock.incorrect.c,
+      Maths: mock.correct.m * 4 - mock.incorrect.m,
     };
     const minMarks = Math.min(...Object.values(marks));
-    return Object.keys(marks).filter(sub => marks[sub] === minMarks).join(", ");
+    return Object.keys(marks).filter((sub) => marks[sub] === minMarks).join(", ");
   };
 
   const addMock = () => {
-    if(!mockName || !mockDate || !mockPlatform || !correct.p || !correct.c || !correct.m){
+    if (!mockName || !mockDate || !mockPlatform || !correct.p || !correct.c || !correct.m) {
       alert("Please fill all required fields");
       return;
     }
     const newMock = {
-      id: mocks.length+1,
+      id: mocks.length + 1,
       name: mockName,
       date: mockDate,
       platform: mockPlatform,
-      correct:{p:Number(correct.p),c:Number(correct.c),m:Number(correct.m)},
-      incorrect:{p:Number(incorrect.p||0),c:Number(incorrect.c||0),m:Number(incorrect.m||0)},
-      unattempted:{p:Number(unattempted.p||0),c:Number(unattempted.c||0),m:Number(unattempted.m||0)}
+      correct: { p: Number(correct.p), c: Number(correct.c), m: Number(correct.m) },
+      incorrect: { p: Number(incorrect.p || 0), c: Number(incorrect.c || 0), m: Number(incorrect.m || 0) },
+      unattempted: { p: Number(unattempted.p || 0), c: Number(unattempted.c || 0), m: Number(unattempted.m || 0) },
     };
-    setMocks([...mocks,newMock]);
-    setMockName(""); setMockDate(new Date().toISOString().slice(0,10));
-    setMockPlatform(""); setCorrect({p:"",c:"",m:""}); setIncorrect({p:"",c:"",m:""}); setUnattempted({p:"",c:"",m:""});
+    setMocks([...mocks, newMock]);
+    setMockName("");
+    setMockDate(new Date().toISOString().slice(0, 10));
+    setMockPlatform("");
+    setCorrect({ p: "", c: "", m: "" });
+    setIncorrect({ p: "", c: "", m: "" });
+    setUnattempted({ p: "", c: "", m: "" });
     setPage("home");
   };
 
   const deleteMock = (id) => {
-    if(window.confirm("Delete this mock?")){
-      setMocks(mocks.filter(m=>m.id!==id));
+    if (window.confirm("Delete this mock?")) {
+      setMocks(mocks.filter((m) => m.id !== id));
     }
   };
 
-  // --- Last 5 mocks for graph
   const lastMocks = mocks.slice(-5);
 
   return (
-    <div style={{background:"linear-gradient(180deg,#020617,#0f172a)",minHeight:"100vh",color:"#e5e7eb",fontFamily:"Inter,system-ui"}}>
-      
+    <div
+      style={{
+        background: "linear-gradient(180deg,#020617,#0f172a)",
+        minHeight: "100vh",
+        color: "#e5e7eb",
+        fontFamily: "Inter,system-ui",
+      }}
+    >
       {/* HEADER */}
-      <div style={{display:"flex",alignItems:"center",padding:16,borderBottom:"1px solid #0f172a"}}>
-        <FiMenu size={28} style={{marginRight:16,cursor:"pointer"}} onClick={()=>setMenuOpen(!menuOpen)}/>
-        <img src="https://img.icons8.com/ios-filled/50/22d3ee/combo-chart.png" alt="logo" style={{width:30,marginRight:10}}/>
-        <h1 style={{fontSize:22,fontWeight:700}}>JEE Strategy</h1>
+      <div style={{ display: "flex", alignItems: "center", padding: 16 }}>
+        <FiMenu size={28} style={{ marginRight: 16, cursor: "pointer" }} onClick={() => setMenuOpen(!menuOpen)} />
+        <img src="https://img.icons8.com/ios-filled/50/22d3ee/combo-chart.png" alt="logo" style={{ width: 30, marginRight: 10 }} />
+        <h1 style={{ fontSize: 22, fontWeight: 700 }}>JEE Strategy</h1>
       </div>
 
       {/* COLLAPSIBLE NAV */}
       {menuOpen && (
-        <div style={{position:"absolute",top:64,left:16,background:"#0f172a",padding:16,borderRadius:12,zIndex:1000,boxShadow:"0 4px 12px rgba(0,0,0,0.5)"}}>
-          <div style={{marginBottom:12,cursor:"pointer"}} onClick={()=>{setPage("home");setMenuOpen(false)}}><FiHome/> Home</div>
-          <div style={{marginBottom:12,cursor:"pointer"}} onClick={()=>{setPage("mocks");setMenuOpen(false)}}><FiList/> Mocks</div>
-          <div style={{marginBottom:12,cursor:"pointer"}} onClick={()=>{setPage("add");setMenuOpen(false)}}><FiPlus/> Add</div>
+        <div style={{ position: "absolute", top: 64, left: 16, background: "#0f172a", padding: 16, borderRadius: 12, zIndex: 1000, boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
+          <div style={{ marginBottom: 12, cursor: "pointer" }} onClick={() => { setPage("home"); setMenuOpen(false); }}><FiHome /> Home</div>
+          <div style={{ marginBottom: 12, cursor: "pointer" }} onClick={() => { setPage("mocks"); setMenuOpen(false); }}><FiList /> Mocks</div>
+          <div style={{ marginBottom: 12, cursor: "pointer" }} onClick={() => { setPage("add"); setMenuOpen(false); }}><FiPlus /> Add</div>
         </div>
       )}
 
-      <div style={{padding:20}}>
-
+      <div style={{ padding: 20 }}>
         {/* HOME PAGE */}
-        {page==="home" && !deepMock && (
+        {page === "home" && !deepMock && (
           <>
-            <div style={{background:"#111827",padding:16,borderRadius:16,marginBottom:20}}>
-              <p style={{color:"#94a3b8"}}>Latest Score</p>
-              <h2 style={{fontSize:32}}>{latestTotal}</h2>
+            <div style={{ background: "#111827", padding: 16, borderRadius: 16, marginBottom: 20 }}>
+              <p style={{ color: "#94a3b8" }}>Latest Score</p>
+              <h2 style={{ fontSize: 32 }}>{latestTotal}</h2>
               <p>{pred.p} percentile • Rank {pred.r}</p>
               <p>Weak Subject(s): {getWeakSubject(latest)}</p>
             </div>
 
-            <div style={{background:"#111827",padding:16,borderRadius:16,marginBottom:20}}>
-              <h3 style={{marginBottom:12}}>Total Marks Trend (Last 5 Mocks)</h3>
+            <div style={{ background: "#111827", padding: 16, borderRadius: 16, marginBottom: 20 }}>
+              <h3 style={{ marginBottom: 12 }}>Total Marks Trend (Last 5 Mocks)</h3>
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={lastMocks.map((m,i)=>({name:`M${m.id}`,marks:calcMarks(m)}))}>
-                  <CartesianGrid stroke="#334155" strokeDasharray="3 3"/>
-                  <XAxis dataKey="name" stroke="#64748b"/>
-                  <YAxis stroke="#64748b"/>
-                  <Tooltip/>
-                  <Line dataKey="marks" stroke="#22d3ee" strokeWidth={3}/>
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div style={{background:"#111827",padding:16,borderRadius:16}}>
-              <h3 style={{marginBottom:12}}>Subject-wise Performance</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={[
-                  {subject:"Physics",marks:latest.correct.p*4-latest.incorrect.p},
-                  {subject:"Chemistry",marks:latest.correct.c*4-latest.incorrect.c},
-                  {subject:"Maths",marks:latest.correct.m*4-latest.incorrect.m}
-                ]}>
-                  <CartesianGrid stroke="#334155" strokeDasharray="3 3"/>
-                  <XAxis dataKey="subject" stroke="#64748b"/>
-                  <YAxis stroke="#64748b"/>
-                  <Tooltip/>
-                  <Line dataKey="marks" stroke="#22d3ee" strokeWidth={4}/>
+                <LineChart data={lastMocks.map((m) => ({ name: `M${m.id}`, marks: calcMarks(m) }))}>
+                  <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                  <XAxis dataKey="name" stroke="#64748b" />
+                  <YAxis stroke="#64748b" />
+                  <Tooltip />
+                  <Line dataKey="marks" stroke="#22d3ee" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -152,72 +145,36 @@ export default function App() {
         )}
 
         {/* MOCKS PAGE */}
-        {page==="mocks" && !deepMock && (
+        {page === "mocks" && !deepMock && (
           <>
-            {mocks.map((mk,i)=>(
-              <div key={mk.id} style={{marginTop:16,background:CARD_COLORS[i%CARD_COLORS.length],padding:16,borderRadius:16,position:"relative",boxShadow:"0 4px 12px rgba(0,0,0,0.5)"}}>
+            {mocks.map((mk, i) => (
+              <div key={mk.id} style={{ marginTop: 16, background: CARD_COLORS[i % CARD_COLORS.length], padding: 16, borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
                 <b>{mk.name}</b>
                 <p>Date: {mk.date} | Platform: {mk.platform}</p>
                 <p>Total Marks: {calcMarks(mk)}</p>
                 <p>Weak Subject(s): {getWeakSubject(mk)}</p>
-                <div style={{display:"flex",marginTop:10,gap:10}}>
-                  <button onClick={()=>setDeepMock(mk)} style={{flex:1,padding:8,borderRadius:12,background:"linear-gradient(90deg,#22d3ee,#8b5cf6)",color:"white",fontWeight:600}}>Deep Analysis</button>
-                  <button onClick={()=>deleteMock(mk.id)} style={{flex:1,padding:8,borderRadius:12,background:"#f87171",color:"white",fontWeight:600}}>Delete</button>
+                <div style={{ display: "flex", marginTop: 10, gap: 10 }}>
+                  <button onClick={() => setDeepMock(mk)} style={{ flex: 1, padding: 8, borderRadius: 12, background: "linear-gradient(90deg,#22d3ee,#8b5cf6)", color: "white", fontWeight: 600 }}>Deep Analysis</button>
+                  <button onClick={() => deleteMock(mk.id)} style={{ flex: 1, padding: 8, borderRadius: 12, background: "#f87171", color: "white", fontWeight: 600 }}>Delete</button>
                 </div>
               </div>
             ))}
           </>
         )}
 
-        {/* DEEP ANALYSIS PAGE */}
-        {deepMock && (
-          <div style={{background:"#111827",padding:16,borderRadius:16}}>
-            <h2><FiPieChart/> {deepMock.name} - {deepMock.platform}</h2>
-            <p>Date: {deepMock.date}</p>
-            <p>Total Marks: {calcMarks(deepMock)}</p>
-            <p>Weak Subject(s): {getWeakSubject(deepMock)}</p>
-            {/* Accuracy formula = correct/attempted*100 */}
-            {["p","c","m"].map(sub=>{
-              const correct = deepMock.correct[sub];
-              const incorrect = deepMock.incorrect[sub];
-              const attempted = correct+incorrect;
-              const acc = attempted===0?0:(correct/attempted*100).toFixed(2);
-              return <p key={sub}>{sub==="p"?"Physics":sub==="c"?"Chemistry":"Maths"} → Correct: {correct}, Incorrect: {incorrect}, Unattempted: {deepMock.unattempted[sub]}, Negative Marks: {incorrect}, Accuracy: {acc}%</p>
-            })}
+        {/* ADD PAGE */}
+        {page === "add" && (
+          <div style={{ background: "#111827", padding: 16, borderRadius: 16 }}>
+            <h2 style={{ fontWeight: 700, fontSize: 20, marginBottom: 12 }}><FiPlus /> Add New Mock</h2>
 
-            <h3 style={{marginTop:16}}>Subject-wise Distribution</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={[
-                  {name:"Physics",value:deepMock.correct.p*4 - deepMock.incorrect.p},
-                  {name:"Chemistry",value:deepMock.correct.c*4 - deepMock.incorrect.c},
-                  {name:"Maths",value:deepMock.correct.m*4 - deepMock.incorrect.m}
-                ]} dataKey="value" nameKey="name" outerRadius={80} label>
-                  <Cell fill={COLORS.Physics}/>
-                  <Cell fill={COLORS.Chemistry}/>
-                  <Cell fill={COLORS.Maths}/>
-                </Pie>
-                <Legend/>
-              </PieChart>
-            </ResponsiveContainer>
+            <input placeholder="Mock Name" value={mockName} onChange={(e) => setMockName(e.target.value)}
+              style={{ width: "100%", padding: 12, marginBottom: 12, borderRadius: 12, border: 0, background: "#020617", color: "white", outline: "none" }} />
 
-            <button onClick={()=>setDeepMock(null)} style={{marginTop:16,padding:12,width:"100%",borderRadius:12,background:"linear-gradient(90deg,#22d3ee,#8b5cf6)",color:"white",fontWeight:700}}>Back</button>
-          </div>
-        )}
+            <input type="date" value={mockDate} onChange={(e) => setMockDate(e.target.value)}
+              style={{ width: "100%", padding: 12, marginBottom: 12, borderRadius: 12, border: 0, background: "#020617", color: "white", outline: "none" }} />
 
-        {/* ADD MOCK PAGE */}
-        {page==="add" && (
-          <div style={{background:"#111827",padding:16,borderRadius:16}}>
-            <h2 style={{fontWeight:700,fontSize:20,marginBottom:12}}><FiPlus/> Add New Mock</h2>
-
-            <input placeholder="Mock Name" value={mockName} onChange={e=>setMockName(e.target.value)}
-              style={{width:"100%",padding:12,marginBottom:12,borderRadius:12,border:"0",background:"#020617",color:"white",outline:"none"}}/>
-
-            <input type="date" value={mockDate} onChange={e=>setMockDate(e.target.value)}
-              style={{width:"100%",padding:12,marginBottom:12,borderRadius:12,border:"0",background:"#020617",color:"white",outline:"none"}}/>
-
-            <select value={mockPlatform} onChange={e=>setMockPlatform(e.target.value)}
-              style={{width:"100%",padding:12,marginBottom:12,borderRadius:12,border:"0",background:"#020617",color:"white",outline:"none"}}>
+            <select value={mockPlatform} onChange={(e) => setMockPlatform(e.target.value)}
+              style={{ width: "100%", padding: 12, marginBottom: 12, borderRadius: 12, border: 0, background: "#020617", color: "white", outline: "none" }}>
               <option value="">Select Platform</option>
               <option value="Mathongo">Mathongo</option>
               <option value="Allen">Allen</option>
@@ -225,22 +182,21 @@ export default function App() {
               <option value="Other">Other</option>
             </select>
 
-            {["p","c","m"].map(sub=>(
-              <div key={sub} style={{marginBottom:12}}>
-                <h4 style={{marginBottom:6}}>{sub==="p"?"Physics":sub==="c"?"Chemistry":"Maths"}</h4>
-                <input type="number" placeholder="Correct" value={correct[sub]} onChange={e=>setCorrect({...correct,[sub]:e.target.value})} max={25}
-                  style={{width:"32%",padding:8,marginRight:"2%",borderRadius:8,border:"0",background:"#020617",color:"white",outline:"none"}}/>
-                <input type="number" placeholder="Incorrect" value={incorrect[sub]} onChange={e=>setIncorrect({...incorrect,[sub]:e.target.value})} max={25}
-                  style={{width:"32%",padding:8,marginRight:"2%",borderRadius:8,border:"0",background:"#020617",color:"white",outline:"none"}}/>
-                <input type="number" placeholder="Unattempted" value={unattempted[sub]} onChange={e=>setUnattempted({...unattempted,[sub]:e.target.value})} max={25}
-                  style={{width:"32%",padding:8,borderRadius:8,border:"0",background:"#020617",color:"white",outline:"none"}}/>
+            {["p", "c", "m"].map(sub => (
+              <div key={sub} style={{ marginBottom: 12 }}>
+                <h4 style={{ marginBottom: 6 }}>{sub === "p" ? "Physics" : sub === "c" ? "Chemistry" : "Maths"}</h4>
+                <input type="number" placeholder="Correct" value={correct[sub]} onChange={(e) => setCorrect({ ...correct, [sub]: e.target.value })} max={25}
+                  style={{ width: "32%", padding: 8, marginRight: "2%", borderRadius: 8, border: 0, background: "#020617", color: "white", outline: "none" }} />
+                <input type="number" placeholder="Incorrect" value={incorrect[sub]} onChange={(e) => setIncorrect({ ...incorrect, [sub]: e.target.value })} max={25}
+                  style={{ width: "32%", padding: 8, marginRight: "2%", borderRadius: 8, border: 0, background: "#020617", color: "white", outline: "none" }} />
+                <input type="number" placeholder="Unattempted" value={unattempted[sub]} onChange={(e) => setUnattempted({ ...unattempted, [sub]: e.target.value })} max={25}
+                  style={{ width: "32%", padding: 8, borderRadius: 8, border: 0, background: "#020617", color: "white", outline: "none" }} />
               </div>
             ))}
 
-            <button onClick={addMock} style={{width:"100%",padding:14,marginTop:12,borderRadius:12,background:"linear-gradient(90deg,#22d3ee,#8b5cf6)",color:"white",fontWeight:700}}>Save Mock</button>
+            <button onClick={addMock} style={{ width: "100%", padding: 14, marginTop: 12, borderRadius: 12, background: "linear-gradient(90deg,#22d3ee,#8b5cf6)", color: "white", fontWeight: 700 }}>Save Mock</button>
           </div>
         )}
-
       </div>
     </div>
   );
